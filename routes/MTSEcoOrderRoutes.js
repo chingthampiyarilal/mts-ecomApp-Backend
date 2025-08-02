@@ -30,7 +30,7 @@ router.post('/createOrder', async (req, res) => {
     const orderId = await generateTemporaryOrderId();
     console.log("checkOrderId", orderId)
     const orderLinePromises = orderLines.map(async (line) => {
-      const orderLine = new OrderLine({
+      const orderLine = new MTSEcomOrderLine({
         ...line,
         orderId: orderId,
         status: status,
@@ -96,7 +96,7 @@ router.post('/changeOrder', async (req, res) => {
 
   try {
     // 1. Save the new order line
-    const newOrderLine = new OrderLine({
+    const newOrderLine = new MTSEcomOrderLine({
       ...orderLine,
       orderId,
       status: 'Pending',
@@ -134,7 +134,7 @@ router.put('/updateOrderStatus', async (req, res) => {
     await order.save();
 
     // Update ALL related order lines
-    const orderLinesResult = await OrderLine.updateMany(
+    const orderLinesResult = await MTSEcomOrderLine.updateMany(
       { orderId },
       { $set: { status } }
     );
