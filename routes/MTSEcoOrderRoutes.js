@@ -28,20 +28,18 @@ router.post('/createOrder', async (req, res) => {
   const { userId, totalAmount, customerEmail, customerPhone, status, orderLines } = req.body;
   try {
     const orderId = await generateTemporaryOrderId();
-    console.log("checkOrderId", orderId)
     const orderLinePromises = orderLines.map(async (line) => {
       const orderLine = new MTSEcomOrderLine({
         ...line,
         orderId: orderId,
         status: status,
       });
-      const savedOrderLine = await orderLine.save();  // Save OrderLine to DB
-      return savedOrderLine._id;  // Return the saved OrderLine's ObjectId
+      const savedOrderLine = await orderLine.save();  
+      return savedOrderLine._id;  
     });
 
-    const savedOrderLineIds = await Promise.all(orderLinePromises);  // Wait for all OrderLines to be saved
+    const savedOrderLineIds = await Promise.all(orderLinePromises); 
 
-    // Step 2: Create the Order document and link saved OrderLines
     const newOrder = new MTSEcomOrder({
       userId,
       orderId,
@@ -66,8 +64,6 @@ router.post('/createOrder', async (req, res) => {
 router.get('/orders/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;
-    console.log('Incoming orderId:', orderId);
-
     const order = await MTSEcomOrder.findOne({ orderId });
     if (!order) {
       console.warn('Order not found for:', orderId);
@@ -77,8 +73,6 @@ router.get('/orders/:orderId', async (req, res) => {
     // 🔥 Fetch order lines manually
     const orderLines = await MTSEcomOrderLine.find({ orderId });
     const fullOrder = { ...order.toObject(), orderLines };
-
-    console.log('Fetched order with orderLines:', fullOrder);
     res.json(fullOrder);
   } catch (error) {
     console.error('Error fetching order:', error);
@@ -87,13 +81,8 @@ router.get('/orders/:orderId', async (req, res) => {
 });
 
 
-
-
-
 router.post('/changeOrder', async (req, res) => {
   const { orderId, orderLine } = req.body;
-  console.log('Change order  req.body', req.body);
-
   try {
     // 1. Save the new order line
     const newOrderLine = new MTSEcomOrderLine({
@@ -186,12 +175,13 @@ router.put('/updateOrderStatus', async (req, res) => {
 // In your backend route
 router.put('/updateOrderLineQuantity', async (req, res) => {
   const { orderId, productId, quantity } = req.body;
+  
   if (!orderId || !productId || typeof quantity !== 'number') {
     return res.status(400).json({ error: "Missing or invalid input fields" });
   }
   try {
     // Find the order line by orderId and productId
-    const updatedOrderLine = await OrderLine.findOneAndUpdate(
+    const updatedOrderLine = await MTSEcomOrderLine.findOneAndUpdate(
       { orderId, productId }, // Use both orderId and productId to find the correct order line
       { $set: { quantity } },  // Update the quantity
       { new: true } // Return the updated document

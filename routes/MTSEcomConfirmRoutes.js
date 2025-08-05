@@ -24,35 +24,18 @@ router.post('/savePaymentData', async (req, res) => {
       });  
       // Save payment to database   
       await newPayment.save();
-    //   console.log("Payment data saved successfully for user:", paymentData.userDetails.userId); 
-    //    const newOrder = new Order({
-    //   orderId: paymentData.orderId,
-    //   userId: paymentData.userDetails.userId,
-    //   products: paymentData.products || [],
-    //   totalAmount: paymentData.amount,
-    //   status: 'Paid',
-    // });
-    //  await newOrder.save();
-    //   res.status(200).json({ message: 'Payment data saved successfully' });
-
-     const updatedOrder = await Order.findOneAndUpdate(
-      { orderId: paymentData.orderId },
-      {
-        status: 'Paid',
-        razorpayPaymentId: paymentData.razorpayPaymentId,
-        razorpayOrderId: paymentData.razorpayOrderId,
-        razorpaySignature: paymentData.razorpaySignature,
-        updatedAt: new Date(),
-      },
-      { new: true }
-    );
-
-    if (!updatedOrder) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    res.status(200).json({ message: 'Payment saved and order updated', updatedOrder });
-
+      console.log("Payment data saved successfully for user:", paymentData.userDetails.userId); 
+       const newOrder = new Order({
+      orderId: paymentData.orderId,
+      userId: paymentData.userDetails.userId,
+      products: paymentData.products || [],
+      totalAmount: paymentData.amount,
+      status: 'Paid',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+     await newOrder.save();
+      res.status(200).json({ message: 'Payment data saved successfully' });
     } catch (error) {
       console.error('Error saving payment data:', error);
       res.status(500).json({ message: 'An error occurred while saving payment data' });
@@ -108,7 +91,7 @@ router.post('/savePaymentData', async (req, res) => {
     try {
       
       const orderData = await Order.findOne({ orderId });
-      
+      console.log("Found order data:", orderData);
   
       if (!orderData) {
         return res.status(404).json({ message: 'No order found for this orderId.' });
