@@ -63,20 +63,55 @@ app.get('/api/categories', (req, res) => {
 
 // Route for products by category
 app.get('/api/product', async (req, res) => {
-  const { category } = req.query;
+  const {
+    category,
+    search = '',
+    sort = '',
+    page = 1,
+    limit = 7
+  } = req.query;
 
   try {
     let query = {};
+
+    // Filter by category if provided
     if (category) {
       query['catID'] = category;
     }
 
-    const products = await Product.find(query);
+    // Add search filter for name or description (case-insensitive)
+    if (search) {
+      query['$or'] = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
 
+    // Handle pagination
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const skip = (pageInt - 1) * limitInt;
+
+    // Build sort query
+    let sortQuery = {};
+    if (sort === 'price_asc') sortQuery = { price: 1 };
+    else if (sort === 'price_desc') sortQuery = { price: -1 };
+    else if (sort === 'name_asc') sortQuery = { name: 1 };
+    else if (sort === 'name_desc') sortQuery = { name: -1 };
+
+    // Fetch products with filters, search, sort, and pagination
+    const products = await Product.find(query)
+      .sort(sortQuery)
+      .skip(skip)
+      .limit(limitInt);
+
+    // Enrich products
     const enrichedProducts = await Promise.all(
       products.map(async (product) => {
-        const classification = await Classification.findOne({ classificationID: product.classificationID });
-        console.log("Looking for classification with ID:", product.classificationID);
+        const classification = await Classification.findOne({
+          classificationID: product.classificationID,
+        });
+
         const attributes = await ClassificationAttribute.find({
           classificationID: product.classificationID,
         });
